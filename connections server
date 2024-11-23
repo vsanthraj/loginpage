@@ -1,0 +1,53 @@
+server.js
+
+i created the one floder called as Routes
+inside this floder i created file called AdminRoutes.js
+
+code is
+import express from "express";
+
+const router=express.Router()
+
+router.post('/adminlogin',(req,res) =>{
+    console.log(req.body)
+})
+
+export {router as adminRouter}
+
+
+=================
+
+i created the another floder called as utils
+inside this i created the db.js file
+code is 
+import mysql from 'mysql';
+
+const con = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "root",
+    database: "emp2024"
+});
+
+con.connect((err) => {
+    if (err) {
+        console.log("Connection error:", err.message);
+    } else {
+        console.log("Connected to the database!");
+    }
+});
+i created the file called the indexjs
+import express from "express";
+import cors from 'cors'
+import { adminRouter } from "./Routes/AdminRoute.js";
+
+
+const app= express()
+app.use(cors())
+app.use(express.json())
+app.use('/auth',adminRouter)
+app.listen(4000, () => {
+    console.log("Server is running")
+})
+
+
