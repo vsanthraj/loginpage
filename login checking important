@@ -1,0 +1,79 @@
+import express from "express";
+import con from '../utils/db.js';
+import jwt from "jsonwebtoken";
+
+const router = express.Router()
+
+router.post('/adminlogin', (req, res) => {
+    const sql = "SELECT * from admin where email = ? and password = ? "
+    con.query(sql, [req.body.email, req.body.password], (err, result) => {
+        if (err) return res.json({ loginStatus: false, Error: "Query error" });
+        if (result.length > 0) {
+            const email = result[0].email;
+            const token = jwt.sign({ role: "admin", email: email }, "jwt_secret_key", { expiresIn: "1d" });
+            res.cookie('token',token)
+             return res.json({ loginStatus: true});
+        }else{
+            return res.json({loginStatus:false ,Error:'wrong email or password'});
+        }
+
+    })
+})
+
+export { router as adminRouter }
+  explain this code what i done line by what is the use oof it
+ChatGPT said:
+ChatGPT
+Certainly! Here's an explanation of what each line in your code does:
+
+1. import express from "express";
+Purpose: This line imports the Express module, which is a web framework for Node.js. Express simplifies building and handling HTTP requests.
+2. import con from '../utils/db.js';
+Purpose: This imports the database connection (con) from a file located at ../utils/db.js. This is where you presumably set up your MySQL connection to interact with your database.
+3. import jwt from "jsonwebtoken";
+Purpose: This imports the jsonwebtoken library, which is used to generate JSON Web Tokens (JWT). These tokens are commonly used for authentication and authorization purposes.
+4. const router = express.Router();
+Purpose: This creates an instance of an Express router, which allows you to define and organize route handlers (HTTP endpoints) for your application. You will define the specific endpoints and logic for handling requests here.
+5. router.post('/adminlogin', (req, res) => { ... });
+Purpose: This sets up a POST route at /adminlogin. When a POST request is made to /adminlogin, the callback function provided (i.e., (req, res) => { ... }) is executed.
+req (request): Contains details about the incoming request (like URL parameters, body, headers).
+res (response): Contains methods to send a response back to the client (like res.json() or res.status()).
+6. const sql = "SELECT * from admin where email = ? and password = ?";
+Purpose: This defines an SQL query string. The query is selecting all columns (SELECT *) from the admin table where the email and password match the provided values (the ? are placeholders for values).
+Security Note: Using ? helps prevent SQL injection attacks by safely inserting user-provided values into the query.
+7. con.query(sql, [req.body.email, req.body.password], (err, result) => { ... });
+Purpose: This executes the SQL query using the MySQL connection (con). The values req.body.email and req.body.password (which are sent in the body of the POST request) are passed in to replace the ? placeholders in the SQL query.
+req.body.email and req.body.password: These values come from the user's request body. The email and password are used to find a matching admin in the database.
+Callback: Once the query executes, it will return either an err or result:
+err: If there was an error with the query, this will contain the error message.
+result: This contains the result of the query, typically rows returned from the database.
+8. if (err) return res.json({ loginStatus: false, Error: "Query error" });
+Purpose: If there is an error with the SQL query (e.g., syntax error, database issues), the server responds with a JSON object containing:
+loginStatus: false: Indicating that the login attempt failed.
+Error: "Query error": A message explaining that the query failed.
+9. if (result.length > 0) { ... }
+Purpose: This checks if any rows were returned from the query. If result.length > 0, that means a matching record (admin) was found in the database, so the login is successful.
+10. const email = result[0].email;
+Purpose: If a matching admin is found, this extracts the email from the first (and potentially only) record in the result array. This email will be included in the JWT payload.
+11. const token = jwt.sign({ role: "admin", email: email }, "jwt_secret_key", { expiresIn: "1d" });
+Purpose: This creates a JWT token using the jsonwebtoken library.
+Payload: The payload includes:
+role: "admin": A custom claim specifying that this is an admin user.
+email: email: The email of the user (admin).
+Secret Key: The second argument "jwt_secret_key" is the secret key used to sign the token (make sure to replace it with a more secure key in production).
+Expiration: { expiresIn: "1d" } specifies that the token will expire in 1 day.
+12. res.cookie('token', token);
+Purpose: This sets a cookie named token on the response, containing the JWT that was just created. This allows the client (typically a frontend application) to store the JWT as a cookie and send it back with subsequent requests to prove the user's identity.
+13. return res.json({ loginStatus: true });
+Purpose: If login is successful, the server responds with a JSON object containing:
+loginStatus: true: Indicating that the login was successful.
+14. else { return res.json({ loginStatus: false, Error: 'wrong email or password' }); }
+Purpose: If no records were found (i.e., the email and password did not match any admin in the database), the server responds with a loginStatus: false and an error message 'wrong email or password'.
+15. export { router as adminRouter };
+Purpose: This exports the router as adminRouter so that it can be imported and used in other parts of the application. Specifically, it allows you to set up the route handler for /adminlogin in your main server file.
+Summary:
+The code sets up an Express route for handling admin login requests.
+It checks the provided email and password against the database.
+If valid, a JWT is generated, and the server sends it as a cookie.
+If not valid, it returns an error message indicating the login failure.
+This approach allows you to authenticate an admin, issue a token for further requests, and manage authentication using JWTs.
